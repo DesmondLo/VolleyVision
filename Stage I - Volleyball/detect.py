@@ -7,10 +7,15 @@ import argparse
 import warnings
 import time
 import copy
+import csv
+import numpy as np
+import pandas as pd
 from my_utils import *
 from tqdm import tqdm
 from datetime import datetime
 from roboflow import Roboflow
+from sklearn.linear_model import RANSACRegressor
+
 
 ###   supress warnings  ###
 warnings.filterwarnings("ignore")
@@ -91,13 +96,19 @@ elif color == 'purple':
     color = [128, 0, 128]
 elif color == 'navy':
     color = [128, 0, 0]
+#  Prepare CSV output 
+csv_filename = os.path.splitext(os.path.basename(input_path))[0]
+csv_dir = os.path.join("Output", "positions")
+os.makedirs(csv_dir, exist_ok=True)
+csv_path = os.path.join(csv_dir, f"{model_name}_{csv_filename}.csv")
+
+csv_file = open(csv_path, mode='w', newline='')
+csv_writer = csv.writer(csv_file)
+csv_writer.writerow(['frame', 'x', 'y'])
+frame_count = 0
+
+
 ###################
-
-
-###    Start Time    ###
-t1 = datetime.now()
-###################
-
 
 ###    Start Time    ###
 t1 = datetime.now()
@@ -161,9 +172,9 @@ else:
 if model_name == 'roboflow':
     #  API key, if doesn't work, refer -->
     #  https://github.com/shukkkur/VolleyVision/discussions/5#discussioncomment-7737081
-    rf = Roboflow(api_key="INSERT YOUR OWN API_KEY")
-    project = rf.workspace().project("volleyball-tracking")
-    model = project.version(18).model
+    rf = Roboflow(api_key="07UwItCw65uPjNhf4rBn")
+    project = rf.workspace().project("volleyball_v2")
+    model = project.version(2).model
 elif model_name == 'yolov7':
     model = custom(path_or_model='yV7-tiny/weights/best.pt')
     model.conf = conf
@@ -187,6 +198,7 @@ if input_type == 'video':
 ### Process Video & Write Frames ###
 if input_type == 'video':
     while input_data.isOpened():
+        frame_count += 1
 
         ret, image = input_data.read()
         if not ret:
@@ -203,7 +215,10 @@ if input_type == 'video':
         if bbox != (0, 0, 0, 0):
             q.appendleft(bbox)
             q.pop()
-        else:
+            cx = bbox[0] + bbox[2] // 2
+            cy = bbox[1] + bbox[3] // 2
+            csv_writer.writerow([frame_count, cx, cy])
+        else:   
             q.appendleft(None)
             q.pop()
 
@@ -274,6 +289,7 @@ else:
 
 
 if input_type == 'video':
+    csv_file.close()
     input_data.release()
     output_writer.release()
     cv2.destroyAllWindows()
