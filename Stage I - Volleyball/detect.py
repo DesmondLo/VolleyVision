@@ -131,21 +131,21 @@ else:
 
 ### Output Writer ###
 basename = os.path.basename(input_path)
-extension = os.path.splitext(output_path)[1]
+name_wo_ext = os.path.splitext(basename)[0]
 
-if output_path == "":  #
+if output_path == "":
     os.makedirs('Output', exist_ok=True)
     if input_type == 'video':
         output_path = os.path.join(
-            "Output", model_name + 'Detect' + '_' + basename)
+            "Output", f"{model_name}_detect_{name_wo_ext}.mp4")
     else:
         output_path = os.path.join(
-            "Output", model_name + 'Detect' + '_' + basename.split('.')[0] + '.jpg')
-else:  # check if user path exists, create otherwise
+            "Output", f"{model_name}_detect_{name_wo_ext}.jpg")
+else:
     f = os.path.split(output_path)[0]
     if not os.path.isdir(f) and (f != ''):
         os.makedirs(f)
-
+extension = os.path.splitext(output_path)[1]
 if input_type == 'video':
     if (extension != '.mp4') and (extension != ''):
         raise Exception(
